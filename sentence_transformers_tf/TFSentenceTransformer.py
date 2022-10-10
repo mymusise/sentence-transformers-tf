@@ -1,3 +1,4 @@
+from tkinter import S
 import tensorflow as tf
 import logging
 from typing import Optional, Iterable, Union, List
@@ -91,22 +92,42 @@ class TFSentenceTransformer(tf.keras.Model):
 
         return all_embeddings
 
-    def call(self, features):
-        out_features = self.model(features)
+    def call(self, features, **kwargs):
+        if isinstance(features, tf.Tensor):
+            features = {'input_ids': features}
+        out_features = self.model(features, **kwargs)
         out_features = self.pooling_model(out_features)
         return out_features
 
-    def compile(self, *args, **kwargs):
-        pass
+    def train_step(self, data):
+        # Unpack the data. Its structure depends on your model and
+        # on what you pass to `fit()`.
+        inputs, labels = data
+        # return super().train_step(inputs)
+        sentence1 = inputs.get('input_ids')
+        sentence2 = inputs.get('target_ids')
 
-    def compute_loss(self, *args, **kwargs):
-        pass
+        with tf.GradientTape() as tape:
+            features1 = self(sentence1, training=True)  # Forward pass
+            features2 = self(sentence2, training=True)  # Forward pass
+            # Compute the loss value
+            # (the loss function is configured in `compile()`)
+            # loss = self.compiled_loss((features1['sentence_embedding'], features2['sentence_embedding']), labels)
 
-    def fit(self, *args, **kwargs):
-        pass
+            sim = -tf.keras.losses.cosine_similarity(features1['sentence_embedding'], features2['sentence_embedding'])
+            labels = tf.cast(labels, dtype=sim.dtype)
+            loss = tf.reduce_mean(tf.math.square(sim - labels), axis=-1)
 
-    def save(self, *args, **kwargs):
-        pass
+        # Compute gradients
+        trainable_vars = self.trainable_variables
+        gradients = tape.gradient(loss, trainable_vars)
+        # Update weights
+        self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+        # Update metrics (includes the metric that tracks the loss)
+        self.compiled_metrics.update_state(labels, (features1, features2))
+        # Return a dict mapping metric names to current value
+        return {'loss_value': loss}
+        # return {m.name: m.result() for m in self.metrics}
 
     def _text_length(self, text: Union[List[int], List[List[int]]]):
         """

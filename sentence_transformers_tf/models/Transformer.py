@@ -80,15 +80,16 @@ class TFTransformer(tf.keras.layers.Layer):
         TFT5EncoderModel._keys_to_ignore_on_load_unexpected = ["decoder.*"]
         self.auto_model = TFT5EncoderModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir, **model_args)
 
-    def call(self, features):
-        trans_features = {"input_ids": features["input_ids"], "attention_mask": features["attention_mask"]}
-        if "token_type_ids" in features:
-            trans_features["token_type_ids"] = features["token_type_ids"]
+    def call(self, features, **kwargs):
+        trans_features = {"input_ids": features["input_ids"]}
+        for key in ["attention_mask", "token_type_ids"]:
+            if key in features:
+                trans_features[key] = features[key]
 
-        output_states = self.auto_model(**trans_features, return_dict=False)
+        output_states = self.auto_model(**trans_features, return_dict=False, **kwargs)
         output_tokens = output_states[0]
 
-        features.update({"token_embeddings": output_tokens, "attention_mask": features["attention_mask"]})
+        features.update({"token_embeddings": output_tokens})
 
         if self.auto_model.config.output_hidden_states:
             all_layer_idx = 2
