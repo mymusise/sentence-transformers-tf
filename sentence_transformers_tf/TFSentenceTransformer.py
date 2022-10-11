@@ -94,7 +94,7 @@ class TFSentenceTransformer(tf.keras.Model):
 
     def call(self, features, **kwargs):
         if isinstance(features, tf.Tensor):
-            features = {'input_ids': features}
+            features = {"input_ids": features}
         out_features = self.model(features, **kwargs)
         out_features = self.pooling_model(out_features)
         return out_features
@@ -104,30 +104,34 @@ class TFSentenceTransformer(tf.keras.Model):
         # on what you pass to `fit()`.
         inputs, labels = data
         # return super().train_step(inputs)
-        sentence1 = inputs.get('input_ids')
-        sentence2 = inputs.get('target_ids')
+        sentence1 = inputs.get("input_ids")
+        sentence2 = inputs.get("target_ids")
 
         with tf.GradientTape() as tape:
             features1 = self(sentence1, training=True)  # Forward pass
             features2 = self(sentence2, training=True)  # Forward pass
             # Compute the loss value
-            # (the loss function is configured in `compile()`)
-            # loss = self.compiled_loss((features1['sentence_embedding'], features2['sentence_embedding']), labels)
+            # TODO: use the loss function that is configured in `compile()`
 
-            sim = -tf.keras.losses.cosine_similarity(features1['sentence_embedding'], features2['sentence_embedding'])
+            sim = -tf.keras.losses.cosine_similarity(features1["sentence_embedding"], features2["sentence_embedding"])
             labels = tf.cast(labels, dtype=sim.dtype)
             loss = tf.reduce_mean(tf.math.square(sim - labels), axis=-1)
 
         # Compute gradients
         trainable_vars = self.trainable_variables
         gradients = tape.gradient(loss, trainable_vars)
+        clip_fn = lambda grad: tf.clip_by_value(grad, -1.0, 1.0) if grad is not None else grad
+
         # Update weights
-        self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+        no_decay = ["bias", "LayerNorm/beta", "LayerNorm/gamma"]
+        trainable_grads_vars = [(clip_fn(grad), var) for grad, var in zip(gradients, trainable_vars) if not any(nd in var.name for nd in no_decay)]
+        self.optimizer.apply_gradients(trainable_grads_vars)
+
         # Update metrics (includes the metric that tracks the loss)
         self.compiled_metrics.update_state(labels, (features1, features2))
+
         # Return a dict mapping metric names to current value
-        return {'loss_value': loss}
-        # return {m.name: m.result() for m in self.metrics}
+        return {"loss_value": loss}
 
     def _text_length(self, text: Union[List[int], List[List[int]]]):
         """
@@ -144,4 +148,3 @@ class TFSentenceTransformer(tf.keras.Model):
             return len(text)
         else:
             return sum([len(t) for t in text])  # Sum of length of individual strings
-

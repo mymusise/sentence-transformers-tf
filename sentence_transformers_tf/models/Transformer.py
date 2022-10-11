@@ -71,7 +71,7 @@ class TFTransformer(tf.keras.layers.Layer):
         elif isinstance(config, MT5Config):
             self._load_mt5_model(model_name_or_path, config, cache_dir, **model_args)
         else:
-            self.auto_model = TFAutoModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir, from_pt=True, **model_args)
+            self.auto_model = TFAutoModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir, **model_args)
 
     def _load_t5_model(self, model_name_or_path, config, cache_dir, **model_args):
         """Loads the encoder model from T5"""
