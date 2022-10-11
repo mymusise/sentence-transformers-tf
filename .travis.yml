@@ -1,0 +1,9 @@
+language: python
+sudo: false
+python:
+ - "3.9"
+install:
+ - pip install -r requirements.txt
+ - pip install sentence-transformers datasets
+script:
+ - pytest tests
