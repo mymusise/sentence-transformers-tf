@@ -3,12 +3,11 @@ import tensorflow as tf
 
 class CosineSimilarityLoss(tf.keras.losses.Loss):
 
-    def __init__(self, *args, loss_fn=tf.keras.losses.MeanSquaredError, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.loss_fn = loss_fn()
 
-    def call(self, sentence_features, labels):
-        sim = -tf.keras.losses.cosine_similarity(sentence_features[0], sentence_features[1])
+    def call(self, labels, sentence_features):
+        features1, features2 = tf.split(sentence_features, 2)
+        sim = -tf.keras.losses.cosine_similarity(features1, features2)
         labels = tf.cast(labels, dtype=sim.dtype)
-        return tf.reduce_mean(tf.math.square(sim - labels), axis=-1)
+        loss = tf.reduce_mean(tf.math.square(sim - labels), axis=-1)
+        return loss
 
