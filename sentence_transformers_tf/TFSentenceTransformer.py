@@ -108,12 +108,13 @@ class TFSentenceTransformer(tf.keras.Model):
         sentence2 = inputs.get("target_ids")
 
         with tf.GradientTape() as tape:
-            features1 = self(sentence1, training=True)  # Forward pass
-            features2 = self(sentence2, training=True)  # Forward pass
+            sentences = tf.concat((sentence1, sentence2), axis=0)
+            features = self(sentences, training=True)["sentence_embedding"]  # Forward pass
             # Compute the loss value
             # TODO: use the loss function that is configured in `compile()`
 
-            sim = -tf.keras.losses.cosine_similarity(features1["sentence_embedding"], features2["sentence_embedding"])
+            features1, features2 = tf.split(features, 2)
+            sim = -tf.keras.losses.cosine_similarity(features1, features2)
             labels = tf.cast(labels, dtype=sim.dtype)
             loss = tf.reduce_mean(tf.math.square(sim - labels), axis=-1)
 
