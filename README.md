@@ -4,7 +4,7 @@
 
 
 <p align="center">
-    <a href="https://colab.research.google.com/github/mymusise/sentence-transformers-tf/blob/main/examples/finetune.ipynb">
+    <a href="https://colab.research.google.com/github/mymusise/sentence-transformers-tf/blob/master/examples/finetune.ipynb">
         <img alt="Build" src="https://colab.research.google.com/assets/colab-badge.svg">
     </a>
     <a href="https://travis-ci.org/mymusise/sentence-transformers-tf.svg?branch=master">
