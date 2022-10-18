@@ -112,8 +112,8 @@ class TFSentenceTransformer(tf.keras.Model):
             features = self(sentences, training=True)["sentence_embedding"]  # Forward pass
             # Compute the loss value
             # TODO: use the loss function that is configured in `compile()`
-
-            loss = self.compiled_loss(labels, features)
+            # loss = self.compiled_loss(labels, features)
+            loss = self.loss(labels, features)
 
         # Compute gradients
         trainable_vars = self.trainable_variables

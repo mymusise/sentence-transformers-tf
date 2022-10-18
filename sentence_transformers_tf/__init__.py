@@ -1,4 +1,4 @@
 from .TFSentenceTransformer import TFSentenceTransformer
-from .losses import CosineSimilarityLoss
+from .losses import CosineSimilarityLoss, CoSentLoss
 
-__all__ = ['TFSentenceTransformer', 'MeanSquaredError']
+__all__ = ["TFSentenceTransformer", "CosineSimilarityLoss", "CoSentLoss"]
